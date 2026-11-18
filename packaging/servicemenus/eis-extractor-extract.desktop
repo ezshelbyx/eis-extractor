@@ -1,0 +1,37 @@
+[Desktop Entry]
+Type=Service
+ServiceTypes=KonqPopupMenu/Plugin
+MimeType=application/zip;application/x-tar;application/x-gzip;application/x-bzip2;application/x-xz;application/x-7z-compressed;application/x-rar;application/x-compressed-tar;application/x-cpio;application/x-iso9660-image;
+Actions=extractHere;extractNewFolder;extractTo;extractSelected;testArchive;openInspector;
+X-KDE-Priority=TopLevel
+X-KDE-StartupNotify=false
+
+[Desktop Action extractHere]
+Name=Extract Here
+Icon=eis-extractor
+Exec=eis-extractor-launcher --progress --extract-here %F
+
+[Desktop Action extractNewFolder]
+Name=Extract to New Folder
+Icon=eis-extractor
+Exec=eis-extractor-launcher --progress --extract-new-folder %F
+
+[Desktop Action extractTo]
+Name=Extract to...
+Icon=eis-extractor
+Exec=eis-extractor-launcher --progress --extract-to %F
+
+[Desktop Action extractSelected]
+Name=Extract Selected Archives
+Icon=eis-extractor
+Exec=eis-extractor-launcher --progress --extract-selected %F
+
+[Desktop Action testArchive]
+Name=Test Archive
+Icon=eis-extractor
+Exec=eis-extractor-launcher --test %F
+
+[Desktop Action openInspector]
+Name=Open Archive Inspector
+Icon=eis-extractor
+Exec=eis-extractor-launcher --inspect %F

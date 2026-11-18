@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=E.I.S EXTRACTOR
+GenericName=Archive Manager
+Comment=Native Linux archive extractor
+Exec=eis-extractor %F
+Icon=eis-extractor
+Terminal=false
+Categories=Utility;Archiving;KDE;
+MimeType=application/zip;application/x-tar;application/x-gzip;application/x-bzip2;application/x-xz;application/x-7z-compressed;application/x-rar;

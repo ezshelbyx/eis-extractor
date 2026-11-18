@@ -1,0 +1,24 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: fedora:45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          dnf install -y gcc-c++ cmake ninja-build qt6-qtbase-devel libarchive-devel p7zip python3
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo
+      - name: Build
+        run: ninja -C build
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+      - name: Smoke
+        run: QT_QPA_PLATFORM=offscreen ./build/eis-extractor --smoke

@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file>icons/eis-extractor.svg</file>
+    </qresource>
+</RCC>
