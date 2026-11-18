@@ -3,7 +3,7 @@ Version:        0.1.0
 Release:        1%{?dist}
 Summary:        Native Linux archive manager
 License:        MIT
-URL:            https://github.com/eis-cybercore/eis-extractor
+URL:            https://github.com/ezshelbyx/eis-extractor
 Source0:        %{name}-%{version}.tar.gz
 
 BuildRequires:  gcc-c++

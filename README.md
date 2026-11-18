@@ -22,6 +22,20 @@ Prerequisites: `gcc-c++`, `cmake`, `ninja-build`, `qt6-qtbase-devel`, `qt6-qtbas
 git clone https://github.com/ezshelbyx/eis-extractor.git && cd eis-extractor && sudo dnf install -y gcc-c++ cmake ninja-build qt6-qtbase-devel qt6-qtbase-gui libarchive-devel p7zip && cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo && ninja -C build && ./packaging/install-user.sh
 ```
 
+## Supported formats
+ZIP, TAR, TAR.GZ, TAR.BZ2, TAR.XZ, 7Z, RAR (via 7-Zip), ISO, CAB, AR, CPIO, XAR, LHA, ZSTD, LZ4, LZMA.
+
+## Known limitations
+- Tested on Fedora 45 KDE Plasma 6 (x86_64).
+- RAR extraction requires the 7-Zip backend.
+- Password-protected archive support depends on backend capabilities.
+- Dolphin may need a restart before service-menu actions appear.
+- The progress window stays open after completion until closed.
+- `Extract to...` uses a native directory dialog and is not suitable for headless/offscreen use.
+
+## Feedback and bug reports
+https://github.com/ezshelbyx/eis-extractor/issues
+
 ## Uninstall
 ```
 ./packaging/uninstall-user.sh
