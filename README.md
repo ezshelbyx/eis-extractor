@@ -16,11 +16,10 @@ Native Linux archive manager for Fedora KDE Plasma 6. Built with C++20 and Qt 6 
 ## Build
 See BUILD.md.
 
-## Install (user-level)
-```
-cmake -S . -B build -G Ninja
-ninja -C build
-./packaging/install-user.sh
+## Install (one command, Fedora KDE Plasma)
+Prerequisites: `gcc-c++`, `cmake`, `ninja-build`, `qt6-qtbase-devel`, `qt6-qtbase-gui`, `libarchive-devel`, `p7zip`.
+```bash
+git clone https://github.com/ezshelbyx/eis-extractor.git && cd eis-extractor && sudo dnf install -y gcc-c++ cmake ninja-build qt6-qtbase-devel qt6-qtbase-gui libarchive-devel p7zip && cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo && ninja -C build && ./packaging/install-user.sh
 ```
 
 ## Uninstall
