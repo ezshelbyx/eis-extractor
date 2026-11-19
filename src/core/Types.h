@@ -47,6 +47,8 @@ struct ProgressInfo {
     QString status;
     double bytesPerSecond = 0.0;
     qint64 elapsedMs = 0;
+    qint64 outputBytes = -1;              // compression output so far, -1 = unknown
+    double compressionRatio = -1.0;       // input/output, -1 = unknown
     bool indeterminate() const { return bytesTotal <= 0; }
 };
 

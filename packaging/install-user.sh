@@ -20,4 +20,4 @@ install -m 0755 "$ROOT/packaging/servicemenus/"*.desktop "$PREFIX/share/kio/serv
 if command -v update-desktop-database >/dev/null 2>&1; then
     update-desktop-database "$PREFIX/share/applications" || true
 fi
-echo "Installed E.I.S EXTRACTOR to $PREFIX"
+echo "Installed E.I.S ARCHIVE to $PREFIX"

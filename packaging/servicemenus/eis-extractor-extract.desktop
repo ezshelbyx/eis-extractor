@@ -2,7 +2,7 @@
 Type=Service
 ServiceTypes=KonqPopupMenu/Plugin
 MimeType=application/zip;application/x-tar;application/x-gzip;application/x-bzip2;application/x-xz;application/x-7z-compressed;application/x-rar;application/x-compressed-tar;application/x-cpio;application/x-iso9660-image;
-Actions=extractHere;extractNewFolder;extractTo;extractSelected;testArchive;openInspector;
+Actions=extractHere;extractNewFolder;extractTo;extractSelected;testArchive;openInspector;mountImage;unmountImage;
 X-KDE-Priority=TopLevel
 X-KDE-StartupNotify=false
 
@@ -35,3 +35,13 @@ Exec=eis-extractor-launcher --test %F
 Name=Open Archive Inspector
 Icon=eis-extractor
 Exec=eis-extractor-launcher --inspect %F
+
+[Desktop Action mountImage]
+Name=Mount Disc Image (read-only)
+Icon=eis-extractor
+Exec=eis-extractor-launcher --mount-image %f
+
+[Desktop Action unmountImage]
+Name=Unmount Disc Image
+Icon=eis-extractor
+Exec=eis-extractor-launcher --unmount-image %f

@@ -1,7 +1,7 @@
 #include "ui/SettingsPage.h"
 
 #include "settings/AppSettings.h"
-#include "backends/BackendRegistry.h"
+#include "core/Capabilities.h"
 
 #include <QFormLayout>
 #include <QGroupBox>
@@ -65,8 +65,7 @@ SettingsPage::SettingsPage(QWidget *parent)
     mainLayout->addWidget(capLabel);
     auto *capEdit = new QTextEdit(this);
     capEdit->setReadOnly(true);
-    BackendRegistry registry;
-    capEdit->setPlainText(registry.capabilityReport() + QStringLiteral("\n\nSupported formats: ") + registry.supportedFormats().join(QStringLiteral(", ")));
+    capEdit->setPlainText(CapabilityRegistry::instance().report());
     mainLayout->addWidget(capEdit, 1);
 }
 

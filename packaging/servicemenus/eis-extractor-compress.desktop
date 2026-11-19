@@ -1,0 +1,22 @@
+[Desktop Entry]
+Type=Service
+ServiceTypes=KonqPopupMenu/Plugin
+MimeType=all/allfiles;
+Actions=compressZip;compress7z;checksumSha256;
+X-KDE-Priority=TopLevel
+X-KDE-StartupNotify=false
+
+[Desktop Action compressZip]
+Name=Compress to ZIP
+Icon=eis-extractor
+Exec=eis-extractor-launcher --compress-zip %F
+
+[Desktop Action compress7z]
+Name=Compress to 7Z
+Icon=eis-extractor
+Exec=eis-extractor-launcher --compress-7z %F
+
+[Desktop Action checksumSha256]
+Name=Create SHA-256 Checksum
+Icon=eis-extractor
+Exec=eis-extractor-launcher --checksum-write %f

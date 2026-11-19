@@ -3,10 +3,15 @@
 
 #include "archive/ArchiveService.h"
 #include "backends/BackendRegistry.h"
+#include "compression/CompressionEngine.h"
+#include "core/Capabilities.h"
 #include "core/Types.h"
 #include "core/Utils.h"
+#include "discimage/DiscImageEngine.h"
 #include "logging/Logger.h"
 #include "settings/AppSettings.h"
+#include "vault/PasswordVault.h"
+#include "verification/HashEngine.h"
 
 #include <QApplication>
 #include <QCommandLineParser>
@@ -16,6 +21,7 @@
 #include <QThread>
 #include <QTimer>
 
+#include <cstdio>
 #include <memory>
 
 class ExtractionWorker : public QObject {
@@ -127,6 +133,70 @@ static int runExtraction(const QStringList &files, bool newFolder)
     return rc;
 }
 
+static int runCompress(const QStringList &files, const QString &format)
+{
+    if (files.isEmpty()) {
+        eis::Logger::instance().error(QStringLiteral("no input files"));
+        return 1;
+    }
+    eis::CompressionRequest request;
+    request.sources = files;
+    request.format = format;
+    request.level = eis::CompressionLevel::Normal;
+    request.outputPath = eis::CompressionEngine::suggestOutputPath(files, format);
+
+    QString error;
+    if (!eis::CompressionEngine::validate(request, &error)) {
+        eis::Logger::instance().error(error);
+        return 1;
+    }
+    const eis::CompressionResult result = eis::CompressionEngine::create(request, nullptr, nullptr);
+    if (!result.ok) {
+        eis::Logger::instance().error(result.error);
+        return 1;
+    }
+    eis::Logger::instance().success(
+        QStringLiteral("Created %1 (%2 files, %3)")
+            .arg(result.outputPath)
+            .arg(result.filesAdded)
+            .arg(eis::utils::humanBytes(result.outputBytes)));
+    return 0;
+}
+
+static int runChecksums(const QStringList &files, const QString &algorithmName)
+{
+    bool ok = false;
+    const eis::HashAlgorithm algorithm = eis::hashAlgorithmFromName(algorithmName, &ok);
+    if (!ok) {
+        eis::Logger::instance().error(QStringLiteral("unknown hash algorithm: %1").arg(algorithmName));
+        return 2;
+    }
+    int rc = 0;
+    for (const QString &file : files) {
+        const eis::HashResult result = eis::HashEngine::hashFile(file, algorithm);
+        if (!result.ok) {
+            printf("ERROR  %s  %s\n", qPrintable(file), qPrintable(result.error));
+            rc = 1;
+            continue;
+        }
+        printf("%s  %s\n", qPrintable(result.digest), qPrintable(file));
+    }
+    return rc;
+}
+
+static int runVerifyChecksums(const QString &checksumFile)
+{
+    const eis::ChecksumFileResult result = eis::HashEngine::verifyChecksumFile(checksumFile);
+    printf("checked=%d matched=%d mismatched=%d missing=%d\n", result.checked, result.matched,
+           result.mismatched, result.missing);
+    for (const QString &error : result.errors)
+        printf("ERROR  %s\n", qPrintable(error));
+    for (const QString &mismatch : result.mismatches)
+        printf("MISMATCH  %s\n", qPrintable(mismatch));
+    printf("%s\n", result.ok ? "all checksums match" : "verification failed");
+    return result.ok ? 0 : 1;
+}
+
 static int runTest(const QStringList &files)
 {
     int rc = 0;
@@ -182,8 +252,8 @@ static int runExtractTo(const QStringList &files)
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-    app.setApplicationName(QStringLiteral("E.I.S EXTRACTOR"));
-    app.setApplicationVersion(QStringLiteral("0.1.0"));
+    app.setApplicationName(QStringLiteral("E.I.S ARCHIVE"));
+    app.setApplicationVersion(QStringLiteral("0.2.0"));
     app.setOrganizationName(QStringLiteral("E.I.S CYBERCORE"));
 
     QCommandLineParser parser;
@@ -208,15 +278,123 @@ int main(int argc, char *argv[])
     parser.addOption(testOption);
     QCommandLineOption inspectOption(QStringList() << "inspect", QStringLiteral("Open archive in inspector."), QStringLiteral("archive"));
     parser.addOption(inspectOption);
+
+    QCommandLineOption compressZipOption(QStringList() << "compress-zip",
+                                         QStringLiteral("Create a ZIP archive from positional files."));
+    parser.addOption(compressZipOption);
+    QCommandLineOption compress7zOption(QStringList() << "compress-7z",
+                                        QStringLiteral("Create a 7Z archive from positional files."));
+    parser.addOption(compress7zOption);
+    QCommandLineOption checksumOption(QStringList() << "checksum",
+                                      QStringLiteral("Print checksums for positional files."));
+    parser.addOption(checksumOption);
+    QCommandLineOption checksumWriteOption(QStringList() << "checksum-write",
+                                           QStringLiteral("Write a .sha256 checksum file next to a file."),
+                                           QStringLiteral("file"));
+    parser.addOption(checksumWriteOption);
+    QCommandLineOption checksumAlgoOption(QStringList() << "checksum-algo",
+                                          QStringLiteral("SHA-256, SHA-512, SHA-1 or MD5."),
+                                          QStringLiteral("algorithm"), QStringLiteral("SHA-256"));
+    parser.addOption(checksumAlgoOption);
+    QCommandLineOption verifyChecksumsOption(QStringList() << "verify-checksums",
+                                             QStringLiteral("Verify a checksum file."),
+                                             QStringLiteral("file"));
+    parser.addOption(verifyChecksumsOption);
+    QCommandLineOption mountImageOption(QStringList() << "mount-image",
+                                        QStringLiteral("Mount an ISO read-only via udisks2."),
+                                        QStringLiteral("image"));
+    parser.addOption(mountImageOption);
+    QCommandLineOption unmountImageOption(QStringList() << "unmount-image",
+                                          QStringLiteral("Unmount an E.I.S-managed image mount."),
+                                          QStringLiteral("image-or-device"));
+    parser.addOption(unmountImageOption);
+    QCommandLineOption createIsoOption(QStringList() << "create-iso",
+                                       QStringLiteral("Create an ISO from a directory."),
+                                       QStringLiteral("directory"));
+    parser.addOption(createIsoOption);
+    QCommandLineOption isoOutputOption(QStringList() << "iso-output",
+                                       QStringLiteral("Output path for --create-iso."),
+                                       QStringLiteral("file"));
+    parser.addOption(isoOutputOption);
+    QCommandLineOption isoLabelOption(QStringList() << "iso-label",
+                                      QStringLiteral("Volume label for --create-iso."),
+                                      QStringLiteral("label"), QStringLiteral("EIS_IMAGE"));
+    parser.addOption(isoLabelOption);
+    QCommandLineOption capabilitiesOption(QStringList() << "capabilities",
+                                          QStringLiteral("Print the probed capability registry and exit."));
+    parser.addOption(capabilitiesOption);
     parser.process(app);
 
     if (parser.isSet(themeOption))
         eis::AppSettings::instance().setTheme(parser.value(themeOption));
 
+    if (parser.isSet(capabilitiesOption)) {
+        printf("%s\n", qPrintable(eis::CapabilityRegistry::instance().report()));
+        return 0;
+    }
+
     if (parser.isSet(smokeOption)) {
         eis::Logger::instance().info(QStringLiteral("Smoke check: application initialized."));
         eis::Logger::instance().info(QStringLiteral("Smoke check: settings loaded."));
+        eis::Logger::instance().info(QStringLiteral("Smoke check: capabilities probed."));
         eis::Logger::instance().info(QStringLiteral("Smoke check: OK"));
+        return 0;
+    }
+
+    if (parser.isSet(compressZipOption))
+        return runCompress(parser.positionalArguments(), QStringLiteral("zip"));
+    if (parser.isSet(compress7zOption))
+        return runCompress(parser.positionalArguments(), QStringLiteral("7z"));
+    if (parser.isSet(checksumOption))
+        return runChecksums(parser.positionalArguments(), parser.value(checksumAlgoOption));
+    if (parser.isSet(checksumWriteOption)) {
+        const QString file = parser.value(checksumWriteOption);
+        const QString output = file + QStringLiteral(".sha256");
+        QString error;
+        if (!eis::HashEngine::generateChecksumFile({file}, output, eis::HashAlgorithm::Sha256,
+                                                   &error)) {
+            fprintf(stderr, "%s\n", qPrintable(error));
+            return 1;
+        }
+        printf("created %s\n", qPrintable(output));
+        return 0;
+    }
+    if (parser.isSet(verifyChecksumsOption))
+        return runVerifyChecksums(parser.value(verifyChecksumsOption));
+
+    if (parser.isSet(mountImageOption)) {
+        eis::DiscImageEngine engine;
+        const eis::MountResult result = engine.mount(parser.value(mountImageOption));
+        if (!result.ok) {
+            fprintf(stderr, "%s\n", qPrintable(result.error));
+            return 1;
+        }
+        printf("%s %s\n", qPrintable(result.device), qPrintable(result.mountPoint));
+        return 0;
+    }
+    if (parser.isSet(unmountImageOption)) {
+        eis::DiscImageEngine engine;
+        QString error;
+        if (!engine.unmount(parser.value(unmountImageOption), &error)) {
+            fprintf(stderr, "%s\n", qPrintable(error));
+            return 1;
+        }
+        printf("unmounted\n");
+        return 0;
+    }
+    if (parser.isSet(createIsoOption)) {
+        if (!parser.isSet(isoOutputOption)) {
+            fprintf(stderr, "--create-iso requires --iso-output <file>\n");
+            return 2;
+        }
+        eis::DiscImageEngine engine;
+        QString error;
+        if (!engine.createIso(parser.value(createIsoOption), parser.value(isoOutputOption),
+                              parser.value(isoLabelOption), &error)) {
+            fprintf(stderr, "%s\n", qPrintable(error));
+            return 1;
+        }
+        printf("created %s\n", qPrintable(parser.value(isoOutputOption)));
         return 0;
     }
 
@@ -251,7 +429,6 @@ int main(int argc, char *argv[])
     // Progress mode or GUI
     bool newFolder = parser.isSet(extractNewOption) || parser.isSet(extractSelectedOption);
     bool extractTo = parser.isSet(extractToOption);
-    bool extractHere = parser.isSet(extractHereOption) || (!newFolder && !extractTo && (parser.isSet(progressOption)));
 
     if (progress || parser.isSet(extractHereOption) || parser.isSet(extractNewOption) || parser.isSet(extractSelectedOption) || parser.isSet(extractToOption)) {
         QStringList files;
@@ -298,6 +475,13 @@ int main(int argc, char *argv[])
             }
         }
     }
+
+    QObject::connect(&app, &QCoreApplication::aboutToQuit, []() {
+        eis::DiscImageEngine engine;
+        QString error;
+        engine.unmountAll(&error);
+        eis::PasswordVault::instance().lock();
+    });
 
     eis::ui::MainWindow window;
     const QStringList pos = parser.positionalArguments();

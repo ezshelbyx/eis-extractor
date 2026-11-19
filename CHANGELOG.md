@@ -1,5 +1,35 @@
 # Changelog
 
+## [0.2.0] - 2026-11-20
+### Added
+- Runtime capability registry for archive formats and optional system tools.
+- Compression engine: ZIP, 7Z, TAR variants, CPIO and single-stream compressors,
+  compression levels, progress, atomic output, encryption and multi-volume
+  support where 7-Zip provides it.
+- Encrypted password vault (`EISVLT01`): Argon2id key derivation, AES-256-GCM,
+  atomic 0600 writes, entries, archive passwords, search, categories, favorites,
+  history, password generator, auto-lock, encrypted export/import and restore.
+- Streaming SHA-256/SHA-512/SHA-1/MD5 verification plus checksum-file
+  generation and verification.
+- Disc image engine: ISO/UDF inspection, xorriso ISO creation, read-only
+  udisks2 mounting and unmount-on-quit.
+- New UI pages: compression, disc images, password vault, file verification,
+  and vault-backed saved passwords on the extraction page.
+- CLI operations: `--capabilities`, `--compress-zip`, `--compress-7z`,
+  `--checksum`, `--checksum-write`, `--verify-checksums`, `--create-iso`,
+  `--mount-image`, `--unmount-image`.
+- Dolphin actions for compression, SHA-256 checksum files, ISO mount and unmount.
+- Tests for ZIP/7Z roundtrips, encrypted 7Z, vault confidentiality and wrong
+  passwords, checksum verification and ISO creation/inspection.
+
+### Fixed
+- libarchive TAR writer capability was never detected (`tar` vs `pax`).
+- 7-Zip format-table parsing missed rows with an extra flags column, disabling
+  7Z creation and encryption.
+- 7-Zip extraction stripped all permissions because `QFile::Permissions` was
+  masked as a POSIX mode. Real `stat` modes are now preserved.
+- File > Open archive now actually opens the selected archive.
+
 ## [0.1.0] - 2026-11-18
 ### Added
 - Initial stable release of E.I.S EXTRACTOR.

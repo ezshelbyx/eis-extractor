@@ -4,6 +4,8 @@
 #include "core/Utils.h"
 #include "queue/JobQueue.h"
 #include "settings/AppSettings.h"
+#include "ui/CompressionPage.h"
+#include "ui/DiscImagePage.h"
 #include "ui/InspectorPage.h"
 #include "ui/IntegrityPage.h"
 #include "ui/LogPage.h"
@@ -11,6 +13,8 @@
 #include "ui/OverviewPage.h"
 #include "ui/SettingsPage.h"
 #include "ui/Theme.h"
+#include "ui/VaultPage.h"
+#include "ui/VerificationPage.h"
 #include "widgets/HudWidgets.h"
 
 #include <QAction>
@@ -33,7 +37,7 @@ namespace eis::ui {
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
-    setWindowTitle(QStringLiteral("E.I.S EXTRACTOR"));
+    setWindowTitle(QStringLiteral("E.I.S ARCHIVE"));
     resize(1280, 820);
 
     auto *central = new QWidget(this);
@@ -59,7 +63,11 @@ MainWindow::MainWindow(QWidget *parent)
     const QStringList labels = {
         QStringLiteral("OVERVIEW"),
         QStringLiteral("EXTRACTION OPERATIONS"),
+        QStringLiteral("COMPRESSION ENGINE"),
         QStringLiteral("ARCHIVE INSPECTOR"),
+        QStringLiteral("DISC IMAGES"),
+        QStringLiteral("PASSWORD VAULT"),
+        QStringLiteral("FILE VERIFICATION"),
         QStringLiteral("INTEGRITY LAB"),
         QStringLiteral("ACTIVITY LOG"),
         QStringLiteral("SETTINGS")
@@ -77,14 +85,22 @@ MainWindow::MainWindow(QWidget *parent)
     m_stack = new QStackedWidget(central);
     m_overview = new OverviewPage(this);
     m_operations = new OperationsPage(this);
+    m_compression = new CompressionPage(this);
     m_inspector = new InspectorPage(this);
+    m_discImages = new DiscImagePage(this);
+    m_vault = new VaultPage(this);
+    m_verification = new VerificationPage(this);
     m_integrity = new IntegrityPage(this);
     m_log = new LogPage(this);
     m_settings = new SettingsPage(this);
 
     m_stack->addWidget(m_overview);
     m_stack->addWidget(m_operations);
+    m_stack->addWidget(m_compression);
     m_stack->addWidget(m_inspector);
+    m_stack->addWidget(m_discImages);
+    m_stack->addWidget(m_vault);
+    m_stack->addWidget(m_verification);
     m_stack->addWidget(m_integrity);
     m_stack->addWidget(m_log);
     m_stack->addWidget(m_settings);
@@ -96,7 +112,11 @@ MainWindow::MainWindow(QWidget *parent)
     auto *fileMenu = menuBar()->addMenu(QStringLiteral("File"));
     auto *openAct = fileMenu->addAction(QStringLiteral("Open archive..."));
     connect(openAct, &QAction::triggered, this, [this]() {
-        QFileDialog::getOpenFileName(this, QStringLiteral("Open archive"), AppSettings::instance().lastDirectory(), utils::archiveNameFilter());
+        const QString file = QFileDialog::getOpenFileName(
+            this, QStringLiteral("Open archive"), AppSettings::instance().lastDirectory(),
+            utils::archiveNameFilter());
+        if (!file.isEmpty())
+            openArchive(file);
     });
     fileMenu->addSeparator();
     auto *quitAct = fileMenu->addAction(QStringLiteral("Quit"));
@@ -105,7 +125,9 @@ MainWindow::MainWindow(QWidget *parent)
     auto *helpMenu = menuBar()->addMenu(QStringLiteral("Help"));
     auto *aboutAct = helpMenu->addAction(QStringLiteral("About"));
     connect(aboutAct, &QAction::triggered, this, [this]() {
-        QMessageBox::information(this, QStringLiteral("About"), QStringLiteral("E.I.S EXTRACTOR\nE.I.S CYBERCORE\nNative Linux archive manager"));
+        QMessageBox::information(this, QStringLiteral("About"),
+                                 QStringLiteral("E.I.S ARCHIVE\nE.I.S CYBERCORE\n"
+                                                "Native Linux archive, disc image and password manager"));
     });
 
     connect(&JobQueue::instance(), &JobQueue::jobAdded, this, &MainWindow::onJobChanged);
@@ -116,6 +138,36 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_operations, &OperationsPage::statusMessage, this, [this](const QString &msg) {
         statusBar()->showMessage(msg, 4000);
     });
+    connect(m_compression, &CompressionPage::statusMessage, this, [this](const QString &msg) {
+        statusBar()->showMessage(msg, 4000);
+    });
+    connect(m_vault, &VaultPage::statusMessage, this, [this](const QString &msg) {
+        statusBar()->showMessage(msg, 4000);
+    });
+    connect(m_verification, &VerificationPage::statusMessage, this, [this](const QString &msg) {
+        statusBar()->showMessage(msg, 4000);
+    });
+    connect(m_discImages, &DiscImagePage::statusMessage, this, [this](const QString &msg) {
+        statusBar()->showMessage(msg, 4000);
+    });
+
+    auto *toolsMenu = menuBar()->addMenu(QStringLiteral("Tools"));
+    auto *compressAct = toolsMenu->addAction(QStringLiteral("Compress files..."));
+    connect(compressAct, &QAction::triggered, this, [this]() {
+        const QStringList files = QFileDialog::getOpenFileNames(
+            this, QStringLiteral("Select files to compress"),
+            AppSettings::instance().lastDirectory(), QStringLiteral("All files (*)"));
+        if (!files.isEmpty()) {
+            m_compression->setSources(files);
+            switchPage(2);
+        }
+    });
+    auto *vaultAct = toolsMenu->addAction(QStringLiteral("Password Vault"));
+    connect(vaultAct, &QAction::triggered, this, [this]() { switchPage(5); });
+    auto *imagesAct = toolsMenu->addAction(QStringLiteral("Disc Images"));
+    connect(imagesAct, &QAction::triggered, this, [this]() { switchPage(4); });
+    auto *verifyAct = toolsMenu->addAction(QStringLiteral("Verify files"));
+    connect(verifyAct, &QAction::triggered, this, [this]() { switchPage(6); });
 
     applyTheme();
     switchPage(0);
@@ -148,7 +200,7 @@ void MainWindow::openArchive(const QString &path)
         m_operations->setArchivePath(path);
     if (m_inspector)
         m_inspector->setArchivePath(path);
-    switchPage(2); // inspector
+    switchPage(3); // inspector
 }
 
 } // namespace eis::ui

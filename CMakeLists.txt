@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.21)
 
 project(EIS-Extractor
-    VERSION 0.1.0
-    DESCRIPTION "E.I.S CYBERCORE archive operations manager"
+    VERSION 0.2.0
+    DESCRIPTION "E.I.S ARCHIVE: archive, disc image and password operations manager"
     LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -16,6 +16,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 include(GNUInstallDirs)
 
 find_package(Qt6 6.4 REQUIRED COMPONENTS Core Gui Widgets Test)
+find_package(OpenSSL REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(LIBARCHIVE REQUIRED IMPORTED_TARGET libarchive)
 
@@ -27,6 +28,20 @@ add_library(eis_core STATIC
     src/core/Types.h
     src/core/Utils.h
     src/core/Utils.cpp
+    src/core/Capabilities.h
+    src/core/Capabilities.cpp
+    src/verification/HashEngine.h
+    src/verification/HashEngine.cpp
+    src/compression/CompressionEngine.h
+    src/compression/CompressionEngine.cpp
+    src/vault/VaultCrypto.h
+    src/vault/VaultCrypto.cpp
+    src/vault/PasswordGenerator.h
+    src/vault/PasswordGenerator.cpp
+    src/vault/PasswordVault.h
+    src/vault/PasswordVault.cpp
+    src/discimage/DiscImageEngine.h
+    src/discimage/DiscImageEngine.cpp
     src/logging/Logger.h
     src/logging/Logger.cpp
     src/settings/AppSettings.h
@@ -52,7 +67,7 @@ add_library(eis_core STATIC
 )
 target_include_directories(eis_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(eis_core
-    PUBLIC Qt6::Core PkgConfig::LIBARCHIVE
+    PUBLIC Qt6::Core PkgConfig::LIBARCHIVE OpenSSL::Crypto
 )
 target_compile_options(eis_core PRIVATE -Wall -Wextra -Wpedantic)
 
@@ -61,6 +76,14 @@ target_compile_options(eis_core PRIVATE -Wall -Wextra -Wpedantic)
 # ---------------------------------------------------------------------------
 qt_add_executable(eis-extractor
     src/app/main.cpp
+    src/ui/CompressionPage.h
+    src/ui/CompressionPage.cpp
+    src/ui/VaultPage.h
+    src/ui/VaultPage.cpp
+    src/ui/VerificationPage.h
+    src/ui/VerificationPage.cpp
+    src/ui/DiscImagePage.h
+    src/ui/DiscImagePage.cpp
     src/ui/MainWindow.h
     src/ui/MainWindow.cpp
     src/ui/Theme.h

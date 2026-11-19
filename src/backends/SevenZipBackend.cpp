@@ -479,6 +479,10 @@ ExtractionResult SevenZipBackend::extract(const ExtractionOptions &options, JobC
 
         const QFileInfo fi(fit.filePath());
         bool isLink = fi.isSymLink();
+        // Capture the real POSIX mode before the file is moved out of staging.
+        struct stat stagedStat {};
+        const bool haveStagedStat = !isLink
+            && ::stat(QFile::encodeName(fit.filePath()).constData(), &stagedStat) == 0;
         const QString destPath = PathGuard::safeJoin(destRoot, normalized);
 
         if (isLink) {
@@ -536,12 +540,8 @@ ExtractionResult SevenZipBackend::extract(const ExtractionOptions &options, JobC
                 continue;
             }
         }
-        if (options.preservePermissions) {
-            struct stat st {};
-            if (::stat(QFile::encodeName(fit.filePath()).constData(), &st) == 0) {
-                // already moved; chmod dest
-            }
-            ::chmod(QFile::encodeName(finalPath).constData(), fi.permissions() & 0777);
+        if (options.preservePermissions && haveStagedStat) {
+            ::chmod(QFile::encodeName(finalPath).constData(), stagedStat.st_mode & 07777);
         }
         ++movedFiles;
     }

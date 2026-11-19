@@ -6,6 +6,7 @@
 #include "core/Utils.h"
 #include "queue/JobQueue.h"
 #include "security/PathGuard.h"
+#include "vault/PasswordVault.h"
 #include "widgets/HudWidgets.h"
 
 #include <QFileDialog>
@@ -18,6 +19,7 @@
 #include <QComboBox>
 #include <QLabel>
 #include <QLineEdit>
+#include <QInputDialog>
 #include <QMessageBox>
 #include <QDragEnterEvent>
 #include <QDropEvent>
@@ -64,7 +66,14 @@ OperationsPage::OperationsPage(QWidget *parent)
 
     m_passwordEdit = new QLineEdit(inputGroup);
     m_passwordEdit->setEchoMode(QLineEdit::Password);
-    form->addRow(QStringLiteral("Password"), m_passwordEdit);
+    auto *passwordRow = new QHBoxLayout();
+    passwordRow->addWidget(m_passwordEdit, 1);
+    auto *savedPasswordBtn = new QPushButton(QStringLiteral("Saved..."), inputGroup);
+    connect(savedPasswordBtn, &QPushButton::clicked, this, &OperationsPage::useSavedPassword);
+    passwordRow->addWidget(savedPasswordBtn);
+    auto *passwordWidget = new QWidget(inputGroup);
+    passwordWidget->setLayout(passwordRow);
+    form->addRow(QStringLiteral("Password"), passwordWidget);
 
     m_collisionBox = new QComboBox(inputGroup);
     m_collisionBox->addItems({QStringLiteral("rename"), QStringLiteral("skip"), QStringLiteral("overwrite")});
@@ -281,6 +290,43 @@ void OperationsPage::retrySelected()
     if (!id.isEmpty()) {
         JobQueue::instance().retry(id);
         emit jobsChanged();
+    }
+}
+
+void OperationsPage::useSavedPassword()
+{
+    PasswordVault &vault = PasswordVault::instance();
+    if (!vault.isUnlocked()) {
+        emit statusMessage(QStringLiteral("Unlock the Password Vault to use saved archive passwords"));
+        return;
+    }
+    const QVector<ArchivePasswordRecord> records =
+        vault.passwordsForArchive(m_archiveEdit->text().trimmed());
+    if (records.isEmpty()) {
+        emit statusMessage(QStringLiteral("No saved password matches this archive"));
+        return;
+    }
+    if (records.size() == 1) {
+        m_passwordEdit->setText(records.first().password);
+        emit statusMessage(QStringLiteral("Saved password applied"));
+        return;
+    }
+    QStringList choices;
+    for (const ArchivePasswordRecord &record : records) {
+        choices << QStringLiteral("%1%2")
+                       .arg(record.group.isEmpty() ? QString() : record.group + QStringLiteral(" · "),
+                            record.archiveName);
+    }
+    bool ok = false;
+    const QString choice = QInputDialog::getItem(
+        this, QStringLiteral("Saved passwords"), QStringLiteral("Choose a saved password:"),
+        choices, 0, false, &ok);
+    if (!ok)
+        return;
+    const int index = choices.indexOf(choice);
+    if (index >= 0) {
+        m_passwordEdit->setText(records.at(index).password);
+        emit statusMessage(QStringLiteral("Saved password applied"));
     }
 }
 

@@ -41,6 +41,7 @@ private slots:
     void resumeSelected();
     void retrySelected();
     void testSelected();
+    void useSavedPassword();
 
 private:
     eis::ExtractionOptions buildOptions(bool toNewFolder, bool customDestination);

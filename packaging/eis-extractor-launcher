@@ -1,4 +1,4 @@
 #!/bin/sh
-# Shared launcher for E.I.S EXTRACTOR Dolphin service-menu actions.
+# Shared launcher for E.I.S ARCHIVE Dolphin service-menu actions.
 DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 exec "$DIR/eis-extractor" "$@"
