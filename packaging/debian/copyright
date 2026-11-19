@@ -1,0 +1,10 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: E.I.S ARCHIVE
+Source: https://github.com/ezshelbyx/eis-extractor
+
+Files: *
+Copyright: E.I.S CYBERCORE
+License: proprietary
+ All rights reserved. This software is proprietary software. No permission is
+ granted to use, copy, modify, or distribute it except as expressly authorized
+ in writing by the copyright holder. See the LICENSE file in the source tree.

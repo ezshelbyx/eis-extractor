@@ -31,7 +31,24 @@ QT_QPA_PLATFORM=offscreen ./build/eis-extractor --smoke
 ```
 
 ## Package
+
+### Source tarball
+```
+./packaging/make-source-tarball.sh
+```
+Creates `dist/eis-extractor-<version>.tar.gz` from the current commit.
+
+### RPM
 ```
 rpmbuild -ba packaging/eis-extractor.spec
 ```
-The spec expects a source tarball named `eis-extractor-0.2.0.tar.gz`.
+The spec expects `eis-extractor-<version>.tar.gz` in the RPM `SOURCES`
+directory.
+
+### Debian/Ubuntu
+```
+cp -r packaging/debian debian
+dpkg-buildpackage -us -uc -b
+```
+`dpkg-buildpackage` is not installed on Fedora by default; the Debian metadata
+is provided for Debian/Ubuntu build hosts.

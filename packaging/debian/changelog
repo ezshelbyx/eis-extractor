@@ -1,0 +1,9 @@
+eis-extractor (0.2.0-1) unstable; urgency=medium
+
+  * New upstream release.
+  * Add compression engine, disc image handling, checksum verification and
+    encrypted password vault.
+  * Add new Dolphin actions for compression, checksum creation and ISO mounts.
+  * Fix TAR and 7-Zip capability probing and 7-Zip permission preservation.
+
+ -- E.I.S CYBERCORE <noreply@eis-cybercore.example>  Fri, 20 Nov 2026 00:00:00 +0000

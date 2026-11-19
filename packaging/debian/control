@@ -1,0 +1,21 @@
+Source: eis-extractor
+Section: utils
+Priority: optional
+Maintainer: E.I.S CYBERCORE <noreply@eis-cybercore.example>
+Build-Depends: debhelper-compat (= 13), cmake, g++, pkg-config,
+               qt6-base-dev, libarchive-dev, libssl-dev
+Standards-Version: 4.6.2
+Rules-Requires-Root: no
+Homepage: https://github.com/ezshelbyx/eis-extractor
+
+Package: eis-extractor
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, 7zip
+Recommends: xorriso, udisks2
+Description: E.I.S ARCHIVE archive, disc image and password manager
+ Native Linux application for creating and extracting archives, inspecting
+ and mounting ISO/UDF images, verifying SHA-256/SHA-512/SHA-1/MD5 checksums,
+ and storing credentials in an Argon2id + AES-256-GCM encrypted vault.
+ .
+ 7-Zip enables 7Z, RAR and encrypted ZIP support. xorriso enables ISO
+ creation. udisks2 enables read-only ISO mounting through polkit.
