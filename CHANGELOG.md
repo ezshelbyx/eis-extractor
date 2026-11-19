@@ -29,6 +29,10 @@
 - 7-Zip extraction stripped all permissions because `QFile::Permissions` was
   masked as a POSIX mode. Real `stat` modes are now preserved.
 - File > Open archive now actually opens the selected archive.
+- libarchive claimed large UDF/ISO images were empty TAR archives, hiding all
+  entries. Zero-filled images are now rejected so 7-Zip handles UDF correctly.
+- Mount records truncated mount points containing spaces (for example
+  `/run/media/user/DiRT 4`). The full path is now recorded.
 
 ## [0.1.0] - 2026-11-18
 ### Added

@@ -185,7 +185,9 @@ DiscImageInfo DiscImageEngine::inspect(const QString &path, const QString &passw
                          : info.listing.error;
         return info;
     }
-    if (!info.listing.formatName.isEmpty())
+    // Keep the UDF/ISO 9660 magic label; backend listings only know the file
+    // suffix (for example "iso").
+    if (!info.isoLike && !info.listing.formatName.isEmpty())
         info.format = info.listing.formatName;
     info.mountable = info.isoLike;
     info.ok = true;
@@ -387,7 +389,11 @@ MountResult DiscImageEngine::mount(const QString &imagePath) const
              QStringLiteral("--no-user-interaction")},
             30000, &code, &mountOutput);
 
-    const QRegularExpression mountExpression(QStringLiteral("at\\s+(\\S+)"));
+    // The mount point may contain spaces (udisks uses the filesystem label),
+    // for example "/run/media/user/DiRT 4". Capture the rest of the line.
+    const QRegularExpression mountExpression(
+        QStringLiteral("Mounted\\s+\\S+\\s+at\\s+(.+?)\\s*$"),
+        QRegularExpression::MultilineOption);
     const QRegularExpressionMatch mountMatch = mountExpression.match(mountOutput);
     if (code != 0 || !mountMatch.hasMatch()) {
         // Do not leave an orphaned loop device behind.

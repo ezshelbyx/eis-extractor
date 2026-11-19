@@ -59,6 +59,7 @@ private slots:
     void vaultExportAndRestore();
     void checksumGenerateAndVerify();
     void isoCreateAndInspect();
+    void libarchiveRejectsZeroFilledImage();
 };
 
 void TestOperations::capabilitiesReportIsNonEmpty()
@@ -304,6 +305,26 @@ void TestOperations::isoCreateAndInspect()
     QVERIFY(info.isoLike);
     QVERIFY(info.readable);
     QVERIFY(info.listing.entries.size() >= 1);
+}
+
+void TestOperations::libarchiveRejectsZeroFilledImage()
+{
+    // UDF/ISO images begin with zeroed system sectors. libarchive's TAR reader
+    // used to report these as a successful empty archive, hiding the entries
+    // that 7-Zip can read. A multi-megabyte zero-filled file must not probe as
+    // an archive through libarchive.
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString imagePath = dir.path() + QStringLiteral("/zero-filled.iso");
+    QFile file(imagePath);
+    QVERIFY(file.open(QIODevice::WriteOnly));
+    QVERIFY(file.resize(2 * 1024 * 1024));
+    file.close();
+
+    LibarchiveBackend backend;
+    QString format;
+    QString error;
+    QVERIFY(!backend.probe(imagePath, QString(), &format, &error));
 }
 
 QTEST_MAIN(TestOperations)

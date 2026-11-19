@@ -146,6 +146,22 @@ bool LibarchiveBackend::probe(const QString &archivePath, const QString &passwor
     // Try to read at least one header to confirm the format is real.
     archive_entry *entry = nullptr;
     const int rc = archive_read_next_header(opened.handle, &entry);
+    if (rc == ARCHIVE_EOF) {
+        // A tar reader treats an all-zero first block as an empty archive.
+        // UDF/ISO images start with zeroed system sectors, so a multi-megabyte
+        // "empty tar" is a false positive (seen with real UDF game images).
+        // Reject it so 7-Zip, which understands UDF, gets a chance.
+        const int detected = archive_format(opened.handle);
+        const bool oversizedEmptyTar =
+            (detected & ARCHIVE_FORMAT_BASE_MASK) == ARCHIVE_FORMAT_TAR
+            && QFileInfo(archivePath).size() > 1024 * 1024;
+        if (oversizedEmptyTar) {
+            if (errorOut)
+                *errorOut = QStringLiteral("libarchive misdetected the image as an empty TAR");
+            closeArchive(opened.handle);
+            return false;
+        }
+    }
     if (rc == ARCHIVE_OK || rc == ARCHIVE_WARN || rc == ARCHIVE_EOF) {
         if (formatOut) {
             const char *fmt = archive_format_name(opened.handle);
