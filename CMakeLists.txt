@@ -120,6 +120,7 @@ install(FILES packaging/eis-extractor.desktop
 install(FILES resources/icons/eis-extractor.svg
         DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps)
 install(FILES packaging/servicemenus/eis-extractor-extract.desktop
+              packaging/servicemenus/eis-extractor-compress.desktop
         DESTINATION ${CMAKE_INSTALL_DATADIR}/kio/servicemenus
         PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
 
