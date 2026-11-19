@@ -404,6 +404,10 @@ bool PasswordVault::writeTo(const QString &destination, QString *error) const
             *error = QStringLiteral("cannot write vault: %1").arg(file.errorString());
         return false;
     }
+    // Restrict the temporary file before any ciphertext is written; the mode
+    // travels with the atomic rename. The chmod below is a belt-and-braces
+    // check for filesystems that ignore setPermissions on the temp file.
+    file.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner);
     file.write(header);
     file.write(ciphertext);
     file.write(tag);
