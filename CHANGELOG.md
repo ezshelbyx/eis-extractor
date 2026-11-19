@@ -33,6 +33,9 @@
   entries. Zero-filled images are now rejected so 7-Zip handles UDF correctly.
 - Mount records truncated mount points containing spaces (for example
   `/run/media/user/DiRT 4`). The full path is now recorded.
+- Dolphin actions were hidden for UDF images because the service menu omitted
+  `application/vnd.efi.iso`, `application/x-cd-image` and
+  `application/x-udf-image`. RAR files now also match `application/vnd.rar`.
 
 ## [0.1.0] - 2026-11-18
 ### Added

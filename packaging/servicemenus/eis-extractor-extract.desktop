@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Service
 ServiceTypes=KonqPopupMenu/Plugin
-MimeType=application/zip;application/x-tar;application/x-gzip;application/x-bzip2;application/x-xz;application/x-7z-compressed;application/x-rar;application/x-compressed-tar;application/x-cpio;application/x-iso9660-image;
+MimeType=application/zip;application/x-tar;application/x-gzip;application/x-bzip2;application/x-xz;application/x-7z-compressed;application/x-rar;application/vnd.rar;application/x-compressed-tar;application/x-cpio;application/vnd.efi.iso;application/x-iso9660-image;application/x-cd-image;application/x-udf-image;
 Actions=extractHere;extractNewFolder;extractTo;extractSelected;testArchive;openInspector;mountImage;unmountImage;
 X-KDE-Priority=TopLevel
 X-KDE-StartupNotify=false

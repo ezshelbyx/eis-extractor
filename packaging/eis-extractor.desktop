@@ -7,4 +7,4 @@ Exec=eis-extractor %F
 Icon=eis-extractor
 Terminal=false
 Categories=Utility;Archiving;KDE;
-MimeType=application/zip;application/x-tar;application/x-gzip;application/x-bzip2;application/x-xz;application/x-7z-compressed;application/x-rar;application/x-cpio;application/x-iso9660-image;application/x-cd-image;
+MimeType=application/zip;application/x-tar;application/x-gzip;application/x-bzip2;application/x-xz;application/x-7z-compressed;application/x-rar;application/vnd.rar;application/x-cpio;application/vnd.efi.iso;application/x-iso9660-image;application/x-cd-image;application/x-udf-image;
